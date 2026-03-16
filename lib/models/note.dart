@@ -1,7 +1,22 @@
-class Note {
+import 'package:hive/hive.dart';
+
+// This is CRITICAL. It tells Hive where to find the generated code.
+// The name must match your filename (e.g., note.dart -> note.g.dart)
+part 'note.g.dart';
+
+@HiveType(typeId: 0) // Label 0: Identifies this class to Hive
+class Note extends HiveObject {
+
+  @HiveField(0) // Each field gets a unique index number
   final String? id;
+
+  @HiveField(1)
   final String title;
+
+  @HiveField(2)
   final String body;
+
+  @HiveField(3)
   final DateTime? createdAt;
 
   Note({
@@ -11,18 +26,16 @@ class Note {
     this.createdAt,
   });
 
-  // This is used when sending data TO your Spring Boot API
+  // Keep your JSON methods for the future Spring Boot backend!
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'title': title,
       'body': body,
-      // If createdAt is null, we send the current time
       'createdAt': createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
     };
   }
 
-  // This is used when receiving data FROM your Spring Boot MongoDB
   factory Note.fromJson(Map<String, dynamic> json) {
     return Note(
       id: json['id'] as String?,

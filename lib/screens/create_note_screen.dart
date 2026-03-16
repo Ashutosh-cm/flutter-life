@@ -6,8 +6,7 @@ import '../providers/notes_provider.dart';
 import '../models/note.dart';
 
 class CreateNoteScreen extends StatefulWidget {
-  final Note? existingNote; // Step 1: Accept an optional note
-
+  final Note? existingNote;
   CreateNoteScreen({this.existingNote});
 
   @override
@@ -21,35 +20,34 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
   @override
   void initState() {
     super.initState();
-    // Step 2: Initialize controllers with existing data if editing
     _titleController = TextEditingController(text: widget.existingNote?.title ?? "");
     _bodyController = TextEditingController(text: widget.existingNote?.body ?? "");
   }
 
   void _saveNote() {
     if (_titleController.text.isEmpty || _bodyController.text.isEmpty) return;
-
     final provider = Provider.of<NotesProvider>(context, listen: false);
 
     if (widget.existingNote == null) {
-      // Create new note
       provider.addNote(_titleController.text, _bodyController.text);
     } else {
-      // Update existing note
-      provider.updateNote(
-          widget.existingNote!.id!,
-          _titleController.text,
-          _bodyController.text
-      );
+      provider.updateNote(widget.existingNote!.id!, _titleController.text, _bodyController.text);
     }
-
     Navigator.of(context).pop();
+  }
+
+  void _deleteNote() {
+    if (widget.existingNote != null) {
+      Provider.of<NotesProvider>(context, listen: false).deleteNote(widget.existingNote!.id!);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
       body: Container(
         width: double.infinity, height: double.infinity,
         decoration: const BoxDecoration(
@@ -58,41 +56,70 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
             fit: BoxFit.cover,
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 25.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 80),
-                Text(
-                  widget.existingNote == null ? "Create notes" : "Edit note",
-                  style: GoogleFonts.jersey10(color: Colors.white, fontSize: 38),
-                ),
-                const SizedBox(height: 30),
-                _buildGlassBox("Title", _titleController, 1, 65),
-                const SizedBox(height: 25),
-                _buildGlassBox("Body", _bodyController, 15, 300),
-                const SizedBox(height: 40),
-                Center(
-                  child: GestureDetector(
-                    onTap: _saveNote,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 15),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9D9D9),
-                        borderRadius: BorderRadius.circular(25),
+        child: Column(
+          children: [
+            // Status bar box
+            Container(height: topPadding, width: double.infinity, color: Colors.black.withOpacity(0.4)),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      Text(
+                        widget.existingNote == null ? "Create notes" : "Edit note",
+                        style: GoogleFonts.jersey10(color: Colors.white, fontSize: 38),
                       ),
-                      child: Text(
-                        "Save",
-                        style: GoogleFonts.jersey10(color: Colors.black, fontSize: 24),
+                      const SizedBox(height: 30),
+                      _buildGlassBox("Title", _titleController, 1, 65),
+                      const SizedBox(height: 25),
+                      _buildGlassBox("Body", _bodyController, 15, 300),
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: _saveNote,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD9D9D9),
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              child: Text(
+                                "Save",
+                                style: GoogleFonts.jersey10(color: Colors.black, fontSize: 24),
+                              ),
+                            ),
+                          ),
+                          if (widget.existingNote != null) ...[
+                            const SizedBox(width: 20),
+                            GestureDetector(
+                              onTap: _deleteNote,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFB71C1C),
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                child: Text(
+                                  "Delete",
+                                  style: GoogleFonts.jersey10(color: Colors.white, fontSize: 24),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

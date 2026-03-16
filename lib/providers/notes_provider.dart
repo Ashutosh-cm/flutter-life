@@ -1,36 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import '../models/note.dart';
 
 class NotesProvider with ChangeNotifier {
-  final List<Note> _items = [];
+  // 1. Reference the box we opened in main.dart
+  final _box = Hive.box<Note>('notesBox');
 
-  List<Note> get items => [..._items];
+  // 2. This getter now fetches data directly from the physical storage
+  List<Note> get items {
+    return _box.values.toList();
+  }
 
-  // 1. Modified Add Note: Now includes the current timestamp
+  // 3. Save a new note to the storage box
   void addNote(String title, String body) {
     final newNote = Note(
-      // We use a String timestamp as a temporary ID until MongoDB generates one
       id: DateTime.now().toIso8601String(),
       title: title,
       body: body,
       createdAt: DateTime.now(),
     );
 
-    _items.add(newNote);
-    notifyListeners();
+    _box.add(newNote); // Hive saves this to the phone's disk
+    notifyListeners(); // Updates the UI
   }
 
-  // 2. New Update Note: Finds the note by ID and replaces it
+  // 4. Update an existing note in the box
   void updateNote(String id, String newTitle, String newBody) {
-    final index = _items.indexWhere((note) => note.id == id);
+    // We find the index (position) of the note with the matching ID
+    final index = _box.values.toList().indexWhere((note) => note.id == id);
 
     if (index >= 0) {
-      _items[index] = Note(
-        id: id, // Keep the same ID
+      final updatedNote = Note(
+        id: id,
         title: newTitle,
         body: newBody,
-        createdAt: DateTime.now(), // Update time to show last modified
+        createdAt: DateTime.now(), // Update the "Saved" time
       );
+
+      _box.putAt(index, updatedNote); // Replaces the data at that position
+      notifyListeners();
+    }
+  }
+
+  // 5. Delete a note from the box
+  void deleteNote(String id) {
+    final index = _box.values.toList().indexWhere((note) => note.id == id);
+    if (index >= 0) {
+      _box.deleteAt(index); // Removes the data from the phone's disk
       notifyListeners();
     }
   }
